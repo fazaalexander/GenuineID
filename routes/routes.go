@@ -26,5 +26,10 @@ func New() *echo.Echo {
 	productAuthGroup := e.Group("/products", middlewares.AdminTokenVerify)
 	productAuthGroup.PUT("/authenticate", controllers.AuthenticateProduct)
 
+	custProductGroup := e.Group("/products", middlewares.CustomerTokenVerify)
+	custProductGroup.GET("/search", controllers.SearchProductByName)
+	custProductGroup.GET("/search/:id", controllers.SearchProductByID)
+	custProductGroup.GET("/category/search", controllers.SearchProductByType)
+
 	return e
 }

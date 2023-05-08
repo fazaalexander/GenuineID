@@ -23,3 +23,13 @@ type ProductResponse struct {
 	Price       float64 `json:"price"`
 	IsVerified  bool    `json:"is_verified"`
 }
+
+func (p *Product) ToProductResponse() *ProductResponse {
+	return &ProductResponse{
+		ID:          p.ID,
+		Name:        p.Name,
+		Description: p.Description,
+		Price:       p.Price,
+		IsVerified:  p.Is_Verified,
+	}
+}
