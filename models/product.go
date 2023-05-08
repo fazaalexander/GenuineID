@@ -17,9 +17,9 @@ type Product struct {
 
 type ProductResponse struct {
 	gorm.Model
-	ID          uint    `json:"id" form:"id"`
-	Name        string  `json:"name" form:"name"`
-	Description string  `json:"description" form:"description"`
-	Price       float64 `json:"price" form:"price"`
-	Is_Verified bool    `json:"is_verified" form:"is_verified"`
+	ID          uint    `json:"id"`
+	Name        string  `json:"name"`
+	Description string  `json:"description"`
+	Price       float64 `json:"price"`
+	IsVerified  bool    `json:"is_verified"`
 }
