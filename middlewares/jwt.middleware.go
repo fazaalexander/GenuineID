@@ -4,6 +4,7 @@ package middlewares
 import (
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/fazaalexander/GenuineID/models"
@@ -42,6 +43,23 @@ func CreateToken(user *models.User, id uint, username string, email string, role
 	}
 
 	return t, nil
+}
+
+func GetClaims(token string) (*jwtCustomClaims, error) {
+	token = strings.Replace(token, "Bearer ", "", 1)
+
+	jwtToken, err := jwt.ParseWithClaims(token, &jwtCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(os.Getenv("JWT_SECRET")), nil
+	})
+
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusUnauthorized, echo.Map{
+			"error": "Invalid token",
+		})
+	}
+
+	claims := jwtToken.Claims.(*jwtCustomClaims)
+	return claims, nil
 }
 
 // Verify token to ensure that user role is "customer"
