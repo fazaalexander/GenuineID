@@ -23,5 +23,8 @@ func New() *echo.Echo {
 	productGroup.DELETE("/:id", controllers.DeleteProduct)
 	productGroup.PUT("/:id", controllers.UpdateProduct)
 
+	productAuthGroup := e.Group("/products", middlewares.AdminTokenVerify)
+	productAuthGroup.PUT("/authenticate", controllers.AuthenticateProduct)
+
 	return e
 }

@@ -118,3 +118,33 @@ func UpdateProduct(c echo.Context) error {
 		"message": "Successfully update product data",
 	})
 }
+
+// Autentikasi barang
+func AuthenticateProduct(c echo.Context) error {
+	var product_auth *models.Product_Auth
+
+	token := c.Request().Header.Get(("Authorization"))
+
+	claims, err := middlewares.GetClaims(token)
+	if err != nil {
+		return err
+	}
+
+	admin_id := claims.ID
+
+	if err := c.Bind(&product_auth); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, echo.Map{
+			"error": err.Error(),
+		})
+	}
+
+	product_auth, err = services.GetProductRepository().AuthenticateProduct(admin_id, product_auth)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"message": "Successfully authenticate product",
+		"product": product_auth,
+	})
+}

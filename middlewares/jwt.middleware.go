@@ -113,3 +113,29 @@ func SellerTokenVerify(next echo.HandlerFunc) echo.HandlerFunc {
 		return next(c)
 	}
 }
+
+// Verify token to ensure that user role is "admin"
+func AdminTokenVerify(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		token := c.Request().Header.Get("Authorization")[7:]
+		jwtToken, err := jwt.ParseWithClaims(token, &jwtCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+			return []byte(os.Getenv("JWT_SECRET")), nil
+		})
+
+		if err != nil {
+			return c.JSON(http.StatusUnauthorized, echo.Map{
+				"message": "Unauthorized",
+			})
+		}
+
+		claims, ok := jwtToken.Claims.(*jwtCustomClaims)
+		if !ok || claims.Role != "admin" {
+			return c.JSON(http.StatusForbidden, echo.Map{
+				"message": "Forbidden Access",
+			})
+		}
+
+		// lanjutkan ke handler/controller apabila token dan role user valid
+		return next(c)
+	}
+}

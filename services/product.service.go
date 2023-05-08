@@ -17,6 +17,7 @@ type IProductService interface {
 	GetProductByID(productID string) (*models.ProductResponse, error)
 	DeleteProduct(productID string) error
 	UpdateProduct(productID string, name string, description string, price float64) error
+	AuthenticateProduct(adminID uint, product_auth *models.Product_Auth) (*models.Product_Auth, error)
 }
 
 type ProductRepository struct {
@@ -114,4 +115,43 @@ func (p *ProductRepository) UpdateProduct(productID string, name string, descrip
 	}
 
 	return nil
+}
+
+func (p *ProductRepository) AuthenticateProduct(admin_id uint, product_auth *models.Product_Auth) (*models.Product_Auth, error) {
+	var product models.Product
+	var admin models.Admin
+
+	if err := config.DB.Where("user_id = ?", admin_id).First(&admin).Error; err != nil {
+		return product_auth, echo.NewHTTPError(http.StatusBadRequest, echo.Map{
+			"message": "Admin not found",
+		})
+	}
+
+	if err := config.DB.Where("id = ?", &product_auth.Product_id).First(&product).Error; err != nil {
+		return product_auth, echo.NewHTTPError(http.StatusBadRequest, echo.Map{
+			"message": "Product not found",
+		})
+	}
+
+	if err := config.DB.Model(&models.Product_Auth{}).Where("product_id = ?", product_auth.Product_id).Updates(models.Product_Auth{Admin_id: &admin.ID, Auth_status: product_auth.Auth_status}).Error; err != nil {
+		return product_auth, echo.NewHTTPError(http.StatusBadRequest, echo.Map{
+			"message": "Failed to update auth status",
+			"error":   err.Error(),
+			"id":      &admin.ID,
+		})
+	}
+
+	if product_auth.Auth_status == "original" {
+		if err := config.DB.Model(&models.Product{}).Where("id = ?", product_auth.Product_id).Update("is_verified", true).Error; err != nil {
+			return product_auth, echo.NewHTTPError(http.StatusBadRequest, echo.Map{
+				"message": "Failed to update product verified status",
+			})
+		}
+	}
+
+	if err := config.DB.Preload("Product").Find(&product_auth).Error; err != nil {
+		return product_auth, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return product_auth, nil
 }
