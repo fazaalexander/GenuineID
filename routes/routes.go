@@ -13,5 +13,6 @@ func New() *echo.Echo {
 
 	e.POST("/login", controllers.Login)
 	e.POST("/register", controllers.Register)
+	e.PUT("/profile", controllers.Profile)
 	return e
 }
