@@ -32,6 +32,6 @@ func New() *echo.Echo {
 	custProductGroup.GET("/search/:id", controllers.SearchProductByID)
 	custProductGroup.GET("/category/search", controllers.SearchProductByType)
 	custProductGroup.POST("/checkout", controllers.ProductCheckout)
-
+	custProductGroup.POST("/review", controllers.CreateProductReview)
 	return e
 }

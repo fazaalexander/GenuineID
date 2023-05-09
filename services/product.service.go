@@ -23,6 +23,7 @@ type IProductService interface {
 	SearchProductByID(product_id string) (*models.ProductResponse, error)
 	SearchProductByType(product_type_id string) (*[]models.ProductResponse, error)
 	ProductCheckout(cust_id uint, transaction_details []models.Transaction_Detail_Request) error
+	CreateProductReview(cust_id uint, req models.Product_Review_Request) error
 }
 
 type ProductRepository struct {
@@ -32,10 +33,10 @@ type ProductRepository struct {
 var productRepository IProductService
 
 func init() {
-	ur := &ProductRepository{}
-	ur.Func = ur
+	pr := &ProductRepository{}
+	pr.Func = pr
 
-	productRepository = ur
+	productRepository = pr
 }
 
 func GetProductRepository() IProductService {
@@ -227,8 +228,7 @@ func (p *ProductRepository) ProductCheckout(user_id uint, req []models.Transacti
 
 	if err := config.DB.Save(&transaction).Error; err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, echo.Map{
-			"message":       err.Error(),
-			"program tolol": "babi",
+			"message": err.Error(),
 		})
 	}
 
@@ -259,4 +259,41 @@ func (p *ProductRepository) ProductCheckout(user_id uint, req []models.Transacti
 	}
 
 	return nil
+}
+
+func (p *ProductRepository) CreateProductReview(user_id uint, req models.Product_Review_Request) error {
+	var customer models.Customer
+	if err := config.DB.Model(&models.Customer{}).Where("user_id = ?", user_id).First(&customer).Error; err != nil {
+		return err
+	}
+
+	var transaction_detail models.Transaction_Detail
+	if err := config.DB.Model(&models.Transaction_Detail{}).Where("product_id = ?", req.Product_id).
+		Joins("JOIN transactions ON transactions.id = transaction_details.transaction_id").
+		Where("cust_id = ?", customer.ID).Where("payment_status = true").First(&transaction_detail).Error; err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, echo.Map{
+			"message": "Customer has not purchased this product or the payment is not completed yet",
+			"error":   err.Error(),
+		})
+	}
+
+	log.Println(transaction_detail)
+
+	review := models.Product_Review{
+		Product_id:  req.Product_id,
+		Cust_id:     customer.ID,
+		Review:      req.Review,
+		Review_date: time.Now(),
+	}
+
+	log.Println(review)
+
+	if err := config.DB.Save(&review).Error; err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, echo.Map{
+			"message": "Failed to add review",
+		})
+	}
+
+	return nil
+
 }

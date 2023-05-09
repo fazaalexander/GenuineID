@@ -15,3 +15,8 @@ type Product_Review struct {
 	Product     Product   `gorm:"foreignkey:Product_id"`
 	Customer    Customer  `gorm:"foreignkey:Cust_id"`
 }
+
+type Product_Review_Request struct {
+	Product_id uint   `json:"product_id"`
+	Review     string `json:"review"`
+}
