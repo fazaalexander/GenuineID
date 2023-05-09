@@ -2,6 +2,7 @@
 package middlewares
 
 import (
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -77,6 +78,7 @@ func CustomerTokenVerify(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		claims, ok := jwtToken.Claims.(*jwtCustomClaims)
+		log.Println(claims)
 		if !ok || claims.Role != "customer" {
 			return c.JSON(http.StatusForbidden, echo.Map{
 				"message": "Forbidden Access",

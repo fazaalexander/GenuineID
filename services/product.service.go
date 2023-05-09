@@ -19,6 +19,9 @@ type IProductService interface {
 	DeleteProduct(productID string) error
 	UpdateProduct(productID string, name string, description string, price float64) error
 	AuthenticateProduct(adminID uint, product_auth *models.Product_Auth) (*models.Product_Auth, error)
+	SearchProductByName(name string) (*[]models.ProductResponse, error)
+	SearchProductByID(product_id string) (*models.ProductResponse, error)
+	SearchProductByType(product_type_id string) (*[]models.ProductResponse, error)
 	ProductCheckout(cust_id uint, transaction_details []models.Transaction_Detail_Request) error
 }
 
@@ -156,6 +159,46 @@ func (p *ProductRepository) AuthenticateProduct(admin_id uint, product_auth *mod
 	}
 
 	return product_auth, nil
+}
+
+func (p *ProductRepository) SearchProductByName(name string) (*[]models.ProductResponse, error) {
+	var products []models.ProductResponse
+	if err := config.DB.Model(&models.Product{}).Where("name LIKE ?", "%"+name+"%").Where("is_verified = true").Find(&products).Error; err != nil {
+		return nil, err
+	}
+
+	if len(products) == 0 {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, echo.Map{
+			"message": "Product not found",
+		})
+	}
+
+	return &products, nil
+}
+func (p *ProductRepository) SearchProductByID(product_id string) (*models.ProductResponse, error) {
+	var product *models.ProductResponse
+	if err := config.DB.Model(&models.Product{}).Where("id = ?", product_id).Where("is_verified = true").First(&product).Error; err != nil {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, echo.Map{
+			"message": "Product not found",
+		})
+	}
+
+	return product, nil
+}
+
+func (p *ProductRepository) SearchProductByType(product_type_id string) (*[]models.ProductResponse, error) {
+	var products []models.ProductResponse
+	if err := config.DB.Model(&models.Product{}).Where("product_type_id = ?", product_type_id).Where("is_verified = true").Find(&products).Error; err != nil {
+		return nil, err
+	}
+
+	if len(products) == 0 {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, echo.Map{
+			"message": "Product not found",
+		})
+	}
+
+	return &products, nil
 }
 
 func (p *ProductRepository) ProductCheckout(user_id uint, req []models.Transaction_Detail_Request) error {

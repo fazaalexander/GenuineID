@@ -27,6 +27,9 @@ func New() *echo.Echo {
 	productAuthGroup.PUT("/authenticate", controllers.AuthenticateProduct)
 
 	custProductGroup := e.Group("/products", middlewares.CustomerTokenVerify)
+	custProductGroup.GET("/search", controllers.SearchProductByName)
+	custProductGroup.GET("/search/:id", controllers.SearchProductByID)
+	custProductGroup.GET("/category/search", controllers.SearchProductByType)
 	custProductGroup.POST("/checkout", controllers.ProductCheckout)
 	return e
 }

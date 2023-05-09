@@ -149,6 +149,54 @@ func AuthenticateProduct(c echo.Context) error {
 	})
 }
 
+// Mencari barang berdasarkan nama
+func SearchProductByName(c echo.Context) error {
+	var products *[]models.ProductResponse
+	name := c.QueryParam("name")
+
+	products, err := services.GetProductRepository().SearchProductByName(name)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"message":  "Product Found",
+		"products": products,
+	})
+}
+
+// Mencari barang berdasarkan ID
+func SearchProductByID(c echo.Context) error {
+	var product *models.ProductResponse
+	id := c.Param("id")
+
+	product, err := services.GetProductRepository().SearchProductByID(id)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"message": "Product Found",
+		"product": product,
+	})
+}
+
+// Mencari barang berdasarkan type (kategori)
+func SearchProductByType(c echo.Context) error {
+	var products *[]models.ProductResponse
+	product_type_id := c.QueryParam("type")
+
+	products, err := services.GetProductRepository().SearchProductByType(product_type_id)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"message":  "Product Found",
+		"products": products,
+	})
+}
+
 // Membeli barang
 func ProductCheckout(c echo.Context) error {
 	token := c.Request().Header.Get(("Authorization"))
