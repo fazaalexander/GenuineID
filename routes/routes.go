@@ -15,6 +15,7 @@ func New() *echo.Echo {
 	e.POST("/login", controllers.Login)
 	e.POST("/register", controllers.Register)
 	e.PUT("/profile", controllers.Profile)
+	e.PUT("/resetpassword", controllers.ResetPassword)
 
 	productGroup := e.Group("/products", middlewares.SellerTokenVerify)
 	productGroup.POST("/", controllers.CreateProduct)
@@ -31,5 +32,6 @@ func New() *echo.Echo {
 	custProductGroup.GET("/search/:id", controllers.SearchProductByID)
 	custProductGroup.GET("/category/search", controllers.SearchProductByType)
 	custProductGroup.POST("/checkout", controllers.ProductCheckout)
+
 	return e
 }

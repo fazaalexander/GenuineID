@@ -6,7 +6,10 @@ import (
 	"strings"
 
 	"github.com/fazaalexander/GenuineID/config"
+	"github.com/fazaalexander/GenuineID/middlewares"
 	"github.com/fazaalexander/GenuineID/models"
+	"github.com/fazaalexander/GenuineID/services"
+	"github.com/fazaalexander/GenuineID/utils"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/labstack/echo/v4"
 )
@@ -123,5 +126,42 @@ func Profile(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, echo.Map{
 		"message": "success update user profile",
+	})
+}
+
+func ResetPassword(c echo.Context) error {
+	token := c.Request().Header.Get(("Authorization"))
+
+	claims, err := middlewares.GetClaims(token)
+	if err != nil {
+		return err
+	}
+
+	user_id := claims.ID
+
+	password := c.FormValue("password")
+	password_confirm := c.FormValue("password_confirm")
+
+	if password != password_confirm {
+		return echo.NewHTTPError(http.StatusBadRequest, echo.Map{
+			"message": "Passwords doesn't match",
+		})
+	}
+
+	hashedPassword, err := utils.HashPassword(password)
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, echo.Map{
+			"message": "Failed to hash password",
+		})
+	}
+
+	// save hashedPassword to database or update existing record
+	if err := services.GetUserRepository().ResetPassword(user_id, hashedPassword); err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"message": "Successfully reset password",
 	})
 }
