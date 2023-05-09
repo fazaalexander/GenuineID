@@ -12,3 +12,8 @@ type Transaction_Detail struct {
 	Product        Product     `gorm:"foreignkey:Product_id"`
 	Transaction    Transaction `gorm:"foreignkey:Transaction_id"`
 }
+
+type Transaction_Detail_Request struct {
+	Product_id uint `json:"product_id" form:"product_id"`
+	Qty        int  `json:"qty" form:"qty"`
+}

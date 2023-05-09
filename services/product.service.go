@@ -2,6 +2,7 @@
 package services
 
 import (
+	"log"
 	"net/http"
 	"time"
 
@@ -18,6 +19,7 @@ type IProductService interface {
 	DeleteProduct(productID string) error
 	UpdateProduct(productID string, name string, description string, price float64) error
 	AuthenticateProduct(adminID uint, product_auth *models.Product_Auth) (*models.Product_Auth, error)
+	ProductCheckout(cust_id uint, transaction_details []models.Transaction_Detail_Request) error
 }
 
 type ProductRepository struct {
@@ -154,4 +156,64 @@ func (p *ProductRepository) AuthenticateProduct(admin_id uint, product_auth *mod
 	}
 
 	return product_auth, nil
+}
+
+func (p *ProductRepository) ProductCheckout(user_id uint, req []models.Transaction_Detail_Request) error {
+	var totalPrice float64
+	for _, td := range req {
+		var product models.Product
+		if err := config.DB.Model(&models.Product{}).Where("id = ?", td.Product_id).Where("is_verified = true").First(&product).Error; err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, echo.Map{
+				"error": err.Error(),
+			})
+		}
+		totalPrice += float64(td.Qty) * product.Price
+	}
+
+	var customer models.Customer
+	if err := config.DB.Model(&models.Customer{}).Where("user_id = ?", user_id).First(&customer).Error; err != nil {
+		return err
+	}
+
+	transaction := models.Transaction{
+		Cust_id:        customer.ID,
+		Order_date:     time.Now(),
+		Total_price:    totalPrice,
+		Payment_status: false,
+	}
+
+	if err := config.DB.Save(&transaction).Error; err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, echo.Map{
+			"message":       err.Error(),
+			"program tolol": "babi",
+		})
+	}
+
+	for _, td := range req {
+		var product models.Product
+		if err := config.DB.Model(&models.Product{}).Where("id = ?", td.Product_id).Where("is_verified = true").First(&product).Error; err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, echo.Map{
+				"error": err.Error(),
+			})
+		}
+
+		transaction_details := models.Transaction_Detail{
+			Product_id:     td.Product_id,
+			Transaction_id: transaction.ID,
+			Seller_id:      product.Seller_id,
+			Qty:            td.Qty,
+			Price:          product.Price,
+		}
+
+		log.Println(transaction_details)
+
+		if err := config.DB.Create(&transaction_details).Error; err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, echo.Map{
+				"message": "Failed to create product transaction detail",
+			})
+		}
+
+	}
+
+	return nil
 }

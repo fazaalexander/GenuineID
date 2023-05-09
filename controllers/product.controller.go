@@ -148,3 +148,31 @@ func AuthenticateProduct(c echo.Context) error {
 		"product": product_auth,
 	})
 }
+
+// Membeli barang
+func ProductCheckout(c echo.Context) error {
+	token := c.Request().Header.Get(("Authorization"))
+
+	claims, err := middlewares.GetClaims(token)
+	if err != nil {
+		return err
+	}
+
+	cust_id := claims.ID
+
+	var req []models.Transaction_Detail_Request
+
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, echo.Map{
+			"message": "Invalid input",
+		})
+	}
+
+	if err := services.GetProductRepository().ProductCheckout(cust_id, req); err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"message": "Successfully create product transaction",
+	})
+}
